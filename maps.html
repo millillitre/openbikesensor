@@ -1,0 +1,16 @@
+<div id="map" style="height: 500px;"></div>
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+
+<script>
+  // Initialisation de la carte
+  const map = L.map("map").setView([43.6001, 1.4419], 13);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+
+  // Exemple d'ajout de points (à adapter avec tes données)
+  const trackData = await fetchTrackData("openbikecle");
+  trackData.forEach((point) => {
+    L.marker([point.lat, point.lng]).addTo(map)
+      .bindPopup(`Vitesse: ${point.speed_kmh} km/h`);
+  });
+</script>
