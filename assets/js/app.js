@@ -1,12 +1,18 @@
 async function fetchTrackData(apiKey) {
   try {
-    const response = await fetch("http://localhost:8000/api/measurements", {
-      headers: {
-        "X-API-KEY": apiKey,
-      },
-    });
+    const response = await fetch(
+      "https://lilied-subprofessionally-mafalda.ngrok-free.dev/api/measurements",
+      {
+        headers: {
+          "X-API-KEY": apiKey,
+          "ngrok-skip-browser-warning": "true"
+        }
+      }
+    );
+
     if (!response.ok) throw new Error("Erreur API");
     return await response.json();
+
   } catch (error) {
     console.error("Erreur:", error);
     return [];
@@ -14,9 +20,7 @@ async function fetchTrackData(apiKey) {
 }
 
 function openTab(tabName) {
-  const tabs = document.getElementsByClassName("tab-content");
-  for (let i = 0; i < tabs.length; i++) {
-    tabs[i].style.display = "none";
-  }
+  document.querySelectorAll(".tab-content")
+    .forEach(t => t.style.display = "none");
   document.getElementById(tabName).style.display = "block";
 }
