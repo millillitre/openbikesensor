@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Traces</title>
-
+  <link rel="stylesheet" href="assets/css/style.css">
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -24,19 +24,16 @@
 
 <script>
 /* =========================
-   CONFIG
-   ========================= */
-
+   CONFIGURATION
+========================= */
 const API_URL = "https://lilied-subprofessionally-mafalda.ngrok-free.dev/api/measurements";
 const API_KEY = "openbikecle";
 const MAX_GAP_SECONDS = 5;
 
 /* =========================
-   CARTE
-   ========================= */
-
+   INITIALISATION CARTE
+========================= */
 const map = L.map("map").setView([43.6001, 1.4419], 13);
-
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: "© OpenStreetMap"
 }).addTo(map);
@@ -44,63 +41,41 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
 let currentLayer = null;
 
 /* =========================
-   UTILS
-   ========================= */
-
+   FONCTIONS UTILES
+========================= */
 function toTimestamp(p) {
   return new Date(
-    p.year,
-    p.month - 1,
-    p.day,
-    p.hour,
-    p.minute,
-    p.second
+    p.year, p.month - 1, p.day, p.hour, p.minute, p.second
   ).getTime();
 }
 
 function groupIntoTraces(points, maxGapSeconds) {
   const traces = [];
   let current = [];
+  const sorted = [...points].sort((a,b) => toTimestamp(a) - toTimestamp(b));
 
-  const sorted = [...points].sort(
-    (a, b) => toTimestamp(a) - toTimestamp(b)
-  );
-
-  for (let i = 0; i < sorted.length; i++) {
-    if (current.length === 0) {
-      current.push(sorted[i]);
-      continue;
-    }
-
-    const gap =
-      (toTimestamp(sorted[i]) - toTimestamp(current[current.length - 1])) / 1000;
-
+  for (let i=0; i<sorted.length; i++) {
+    if (current.length === 0) { current.push(sorted[i]); continue; }
+    const gap = (toTimestamp(sorted[i]) - toTimestamp(current[current.length-1]))/1000;
     if (gap > maxGapSeconds) {
       traces.push(current);
       current = [];
     }
-
     current.push(sorted[i]);
   }
-
   if (current.length) traces.push(current);
   return traces;
 }
 
 function formatTraceLabel(trace) {
   const start = trace[0];
-  const end = trace[trace.length - 1];
-  return `
-    ${start.day}/${start.month}/${start.year}
-    ${start.hour}:${start.minute}:${start.second}
-    (${trace.length} points)
-  `;
+  const end = trace[trace.length-1];
+  return `${start.day}/${start.month}/${start.year} ${start.hour}:${start.minute}:${start.second} (${trace.length} points)`;
 }
 
 /* =========================
-   AFFICHAGE
-   ========================= */
-
+   AFFICHAGE D'UNE TRACE
+========================= */
 function showTrace(trace) {
   if (currentLayer) {
     map.removeLayer(currentLayer);
@@ -108,11 +83,13 @@ function showTrace(trace) {
 
   const coords = trace.map(p => [p.lat, p.lng]);
 
+  // ligne
   currentLayer = L.polyline(coords, {
     color: "#2563eb",
     weight: 4
   }).addTo(map);
 
+  // points
   trace.forEach(p => {
     L.circleMarker([p.lat, p.lng], {
       radius: 4,
@@ -124,43 +101,43 @@ function showTrace(trace) {
 }
 
 /* =========================
-   CHARGEMENT
-   ========================= */
-
+   CHARGEMENT DES TRACES
+========================= */
 async function loadTraces() {
-  const response = await fetch(API_URL, {
-    headers: {
-      "X-API-KEY": API_KEY,
-      "ngrok-skip-browser-warning": "true"
+  try {
+    const response = await fetch(API_URL, {
+      headers: {
+        "X-API-KEY": API_KEY,
+        "ngrok-skip-browser-warning": "true"
+      }
+    });
+    let data = await response.json();
+    data = data.filter(p => p.valid === 1);
+    const traces = groupIntoTraces(data, MAX_GAP_SECONDS);
+
+    const list = document.getElementById("list");
+
+    traces.forEach((trace) => {
+      const btn = document.createElement("button");
+      btn.className = "trace-item";
+      btn.innerText = formatTraceLabel(trace);
+      btn.onclick = () => {
+        document.querySelectorAll(".trace-item").forEach(e => e.classList.remove("active"));
+        btn.classList.add("active");
+        showTrace(trace);
+      };
+      list.appendChild(btn);
+    });
+
+    // Afficher la première trace par défaut
+    if (traces.length > 0) {
+      list.firstChild.classList.add("active");
+      showTrace(traces[0]);
     }
-  });
 
-  const data = (await response.json())
-    .filter(p => p.valid === 1);
-
-  const traces = groupIntoTraces(data, MAX_GAP_SECONDS);
-  const list = document.getElementById("list");
-
-  traces.forEach((trace, index) => {
-    const div = document.createElement("div");
-    div.className = "trace-item";
-    div.innerHTML = formatTraceLabel(trace);
-
-    div.onclick = () => {
-      document
-        .querySelectorAll(".trace-item")
-        .forEach(e => e.classList.remove("active"));
-
-      div.classList.add("active");
-      showTrace(trace);
-    };
-
-    list.appendChild(div);
-  });
-
-  if (traces.length > 0) {
-    showTrace(traces[0]);
-    list.firstChild.classList.add("active");
+  } catch(err) {
+    console.error("Erreur chargement:", err);
+    alert("Impossible de charger les traces");
   }
 }
 
