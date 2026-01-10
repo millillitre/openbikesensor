@@ -6,11 +6,56 @@
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body class="iframe-page">
-  <h2>Import</h2>
-  <p>Import functionality coming soon.</p>
+  <h2>Import Data</h2>
+  <div id="not-logged-in" style="display: none; max-width: 500px; margin: 0 auto; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
+    <p>Please <a href="#" onclick="parent.openTab('account'); return false;" style="color: #555; text-decoration: underline;">login</a> to import data.</p>
+  </div>
 
-  <footer>
-    <p>This site is based on the portal of <a href="https://github.com/openbikesensor" target="_blank">https://github.com/openbikesensor</a> project.</p>
-  </footer>
+  <div id="import-section" style="display: none;">
+    <p>Import your tracks in JSON format.</p>
+    <input type="file" id="json-file" accept=".json">
+    <button id="import-btn">Import</button>
+    <p id="import-status"></p>
+  </div>
+
+  <script>
+    const notLoggedIn = document.getElementById('not-logged-in');
+    const importSection = document.getElementById('import-section');
+    const importBtn = document.getElementById('import-btn');
+    const jsonFile = document.getElementById('json-file');
+    const importStatus = document.getElementById('import-status');
+
+    // Check login status
+    if (localStorage.getItem('loggedIn') === 'true') {
+      importSection.style.display = 'block';
+    } else {
+      notLoggedIn.style.display = 'block';
+    }
+
+    importBtn.addEventListener('click', function() {
+      const file = jsonFile.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          try {
+            const data = JSON.parse(e.target.result);
+            const imports = JSON.parse(localStorage.getItem('imports') || '[]');
+            imports.push(file.name);
+            localStorage.setItem('imports', JSON.stringify(imports));
+            importStatus.textContent = 'Import successful!';
+            importStatus.style.color = 'green';
+          } catch (err) {
+            importStatus.textContent = 'Invalid JSON file.';
+            importStatus.style.color = 'red';
+          }
+        };
+        reader.readAsText(file);
+      } else {
+        importStatus.textContent = 'Please select a file.';
+        importStatus.style.color = 'red';
+      }
+    });
+  </script>
+
 </body>
 </html>

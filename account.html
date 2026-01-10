@@ -6,11 +6,98 @@
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body class="iframe-page">
-  <h2>Account</h2>
-  <p>Account management coming soon.</p>
+  <div id="login-form">
+    <h2>Login</h2>
+    <form id="login">
+      <label for="username">Username:</label>
+      <input type="text" id="username" required>
+      <label for="password">Password:</label>
+      <input type="password" id="password" required>
+      <button type="submit">Login</button>
+    </form>
+  </div>
 
-  <footer>
-    <p>This site is based on the portal of <a href="https://github.com/openbikesensor" target="_blank">https://github.com/openbikesensor</a> project.</p>
-  </footer>
+  <div id="user-panel" style="display: none;">
+    <h2>Welcome, <span id="user-name"></span>!</h2>
+    <h3>Your Imports</h3>
+    <ul id="imports-list"></ul>
+    <button id="change-password-btn">Change Password</button>
+    <button id="logout-btn">Logout</button>
+  </div>
+
+  <div id="change-password-form" style="display: none;">
+    <h2>Change Password</h2>
+    <form id="change-password">
+      <label for="new-password">New Password:</label>
+      <input type="password" id="new-password" required>
+      <button type="submit">Update</button>
+      <button type="button" id="cancel-change">Cancel</button>
+    </form>
+  </div>
+
+  <script>
+    const loginForm = document.getElementById('login-form');
+    const userPanel = document.getElementById('user-panel');
+    const changePasswordForm = document.getElementById('change-password-form');
+    const userNameSpan = document.getElementById('user-name');
+    const importsList = document.getElementById('imports-list');
+
+    // Check if logged in
+    if (localStorage.getItem('loggedIn') === 'true') {
+      showUserPanel();
+    }
+
+    document.getElementById('login').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      if (username && password) {
+        localStorage.setItem('loggedIn', 'true');
+        localStorage.setItem('user', username);
+        localStorage.setItem('imports', JSON.stringify([]));
+        showUserPanel();
+      }
+    });
+
+    document.getElementById('change-password-btn').addEventListener('click', function() {
+      userPanel.style.display = 'none';
+      changePasswordForm.style.display = 'block';
+    });
+
+    document.getElementById('cancel-change').addEventListener('click', function() {
+      changePasswordForm.style.display = 'none';
+      userPanel.style.display = 'block';
+    });
+
+    document.getElementById('change-password').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const newPassword = document.getElementById('new-password').value;
+      alert('Password changed!');
+      changePasswordForm.style.display = 'none';
+      userPanel.style.display = 'block';
+    });
+
+    document.getElementById('logout-btn').addEventListener('click', function() {
+      localStorage.removeItem('loggedIn');
+      localStorage.removeItem('user');
+      userPanel.style.display = 'none';
+      loginForm.style.display = 'block';
+    });
+
+    function showUserPanel() {
+      const user = localStorage.getItem('user');
+      userNameSpan.textContent = user;
+      const imports = JSON.parse(localStorage.getItem('imports') || '[]');
+      importsList.innerHTML = '';
+      imports.forEach(imp => {
+        const li = document.createElement('li');
+        li.textContent = imp;
+        importsList.appendChild(li);
+      });
+      loginForm.style.display = 'none';
+      userPanel.style.display = 'block';
+    }
+  </script>
+
 </body>
 </html>

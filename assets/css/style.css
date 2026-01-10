@@ -2,8 +2,7 @@
 body {
   font-family: 'Roboto', Arial, sans-serif;
   margin: 0;
-  padding: 0;
-  background: #555; /* Light grey background */
+  padding: 0; 
   min-height: 100vh;
   color: #333;
   display: flex;
@@ -20,20 +19,11 @@ h1 {
 
 /* ======== HEADER ======== */
 header {
-  /* display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  padding: 20px;
-  background: rgba(255,255,255,0.95);
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  margin-bottom: 0;
-  overflow: hidden; */
   display: flex;
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  margin: 0 auto; /* Centre le header */
+  margin: 0 auto;
   padding: 20px;
   background: rgba(255, 255, 255, 0.95);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
@@ -45,14 +35,14 @@ header {
 .logo {
   font-size: 20px;
   font-weight: 700;
-  color: #555; /* Changed to grey */
+  color: #555;
   text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
   cursor: pointer;
   transition: color 0.3s;
 }
 
 .logo:hover {
-  color: #333; /* Darker grey on hover */
+  color: #333;
 }
 
 nav {
@@ -73,12 +63,12 @@ nav {
 }
 
 .nav-link:hover {
-  color: #555; /* Changed to grey */
+  color: #555;
 }
 
 .account-btn {
   padding: 8px 16px;
-  background: #555; /* Changed to grey */
+  background: #555;
   color: white;
   border: none;
   border-radius: 25px;
@@ -94,7 +84,7 @@ nav {
 }
 
 .account-btn:hover {
-  background: #555; /* Darker grey on hover */
+  background: #555;
   transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(102,102,102,0.4);
 }
@@ -138,12 +128,7 @@ nav {
 
 /* ======== FOOTER ======== */
 footer {
-  /* text-align: center;
-  padding: 20px;
-  background: rgba(255,255,255,0.9);
-  margin-top: 20px;
-  border-top: 1px solid #ddd; */
-  margin-top: auto; /* Pousse le footer en bas */
+  margin-top: auto;
   text-align: center;
   padding: 20px;
   background: rgba(255, 255, 255, 0.9);
@@ -167,42 +152,82 @@ footer a:hover {
 
 /* ======== IFRAME PAGES ======== */
 .iframe-page {
-  position: relative;
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
-  padding-bottom: 80px; /* Space for footer */
+  padding: 20px;
+  box-sizing: border-box;
+  background: white;
 }
 
-.iframe-page footer {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: rgba(255,255,255,0.9);
-  padding: 10px;
-  text-align: center;
-  border-top: 1px solid #ddd;
+.iframe-page > div import-section, login-form {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
 }
 
-.iframe-page footer p {
-  margin: 0;
-  font-size: 12px;
-  color: #666;
+.iframe-page form {
+  width: 100%;
+  max-width: 300px;
 }
 
-.iframe-page footer a {
-  color: #555;
-  text-decoration: none;
+.iframe-page #login-form,
+.iframe-page #user-panel,
+.iframe-page #change-password-form,
+.iframe-page #import-section,
+.iframe-page #not-logged-in {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
 }
 
-.iframe-page footer a:hover {
-  text-decoration: underline;
+.iframe-page #imports-list {
+  width: 100%;
+  max-width: 300px;
+  margin: 15px 0;
+  text-align: left;
+}
+
+.iframe-page #imports-list li {
+  padding: 8px;
+  background: #f8f9fa;
+  border-radius: 5px;
+  margin-bottom: 5px;
+}
+
+.iframe-page #change-password-btn,
+.iframe-page #logout-btn {
+  margin-top: 10px;
+  width: 100%;
+  max-width: 300px;
+}
+
+.iframe-page #json-file {
+  margin: 10px 0;
+}
+
+.iframe-page #import-btn {
+  margin-top: 10px;
+  width: 100%;
+  max-width: 300px;
+}
+
+.iframe-page #import-status {
+  margin-top: 10px;
+  font-weight: 500;
 }
 
 /* ======== MAIN PAGE ======== */
 .main-page {
-  /* position: relative;
-  min-height: 100vh;
-  padding-bottom: 80px; */
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -232,13 +257,6 @@ footer a:hover {
 
 /* ======== TAB CONTENT ======== */
 .tab-content {
-  /* display: none;
-  background: white;
-  border-radius: 15px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-  overflow: hidden;
-  min-height: 600px;
-  margin: 20px; */
   display: none;
   width: calc(100% - 40px);
   margin: 20px auto;
@@ -246,7 +264,7 @@ footer a:hover {
   border-radius: 15px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-  min-height: calc(100vh - 180px); /* Ajuste cette valeur selon la hauteur de ton header et footer */
+  min-height: calc(100vh - 180px);
   padding: 20px;
   box-sizing: border-box;
 }
@@ -323,6 +341,49 @@ footer a:hover {
 .leaflet-pane,
 .leaflet-layer {
   will-change: auto !important;
+}
+
+/* Forms */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+label {
+  font-weight: 500;
+}
+
+input {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+
+button[type="submit"], button {
+  padding: 10px;
+  background: #555;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+button[type="submit"]:hover, button:hover {
+  background: #333;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+li {
+  padding: 5px 0;
+  border-bottom: 1px solid #eee;
 }
 
 /* Responsive */
