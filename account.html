@@ -6,31 +6,60 @@
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body class="iframe-page">
-  <div id="login-form">
-    <h2>Login</h2>
-    <form id="login">
-      <label for="username">Username:</label>
-      <input type="text" id="username" required>
-      <label for="password">Password:</label>
-      <input type="password" id="password" required>
-      <button type="submit">Login</button>
-    </form>
-    <p id="login-error" style="color: red; display: none;"></p>
+
+  <div id="auth-section">
+    <div id="login-form">
+      <h2>Login</h2>
+      <form id="login">
+        <label for="username">Username:</label>
+        <input type="text" id="username" required>
+        <label for="password">Password:</label>
+        <input type="password" id="password" required>
+        <button type="submit">Login</button>
+      </form>
+      <p id="login-error" style="color: red; display: none;"></p>
+      <p>Pas encore de compte ? <a href="#" id="show-register" style="color: #555; text-decoration: underline; cursor: pointer;">Register</a></p>
+    </div>
+
+    <div id="register-form" style="display: none;">
+      <h2>Register</h2>
+      <form id="register">
+        <label for="new-username">Username:</label>
+        <input type="text" id="new-username" required>
+        <label for="new-password-reg">Password:</label>
+        <input type="password" id="new-password-reg" required>
+        <label for="confirm-password-reg">Confirm Password:</label>
+        <input type="password" id="confirm-password-reg" required>
+        <button type="submit">Register</button>
+        <button type="button" id="cancel-register">Cancel</button>
+      </form>
+      <p id="register-error" style="color: red; display: none;"></p>
+    </div>
   </div>
 
-  <div id="user-panel" style="display: none;">
+  <div id="user-section" style="display: none;">
     <h2>Welcome, <span id="user-name"></span>!</h2>
-    <h3>Your Imports</h3>
-    <ul id="imports-list"></ul>
+    <div id="import-section">
+      <h3>Import your tracks</h3>
+      <input type="file" id="json-file" accept=".json">
+      <button id="import-btn">Import</button>
+      <p id="import-status"></p>
+    </div>
+    <hr>
     <button id="change-password-btn">Change Password</button>
     <button id="logout-btn">Logout</button>
   </div>
 
-  <div id="change-password-form" style="display: none;">
-    <h2>Change Password</h2>
+  <div id="change-password-section" style="display: none;">
+    <h3>Change Password</h3>
     <form id="change-password">
       <label for="new-password">New Password:</label>
       <input type="password" id="new-password" required>
+      <label for="confirm-password">Confirm New Password:</label>
+      <input type="password" id="confirm-password" required>
+      <label style="display: block; margin: 10px 0;">
+        <input type="checkbox" id="show-password"> Show Password
+      </label>
       <button type="submit">Update</button>
       <button type="button" id="cancel-change">Cancel</button>
     </form>
@@ -38,160 +67,145 @@
   </div>
 
   <script>
+    const API_BASE_URL = 'https://lilied-subprofessionally-mafalda.ngrok-free.dev';
+    const authSection = document.getElementById('auth-section');
     const loginForm = document.getElementById('login-form');
-    const userPanel = document.getElementById('user-panel');
-    const changePasswordForm = document.getElementById('change-password-form');
-    const userNameSpan = document.getElementById('user-name');
-    const importsList = document.getElementById('imports-list');
-    const loginError = document.getElementById('login-error');
-    const changePasswordError = document.getElementById('change-password-error');
+    const registerForm = document.getElementById('register-form');
+    const userSection = document.getElementById('user-section');
+    const changePasswordSection = document.getElementById('change-password-section');
+    const importStatus = document.getElementById('import-status');
+    const jsonFile = document.getElementById('json-file');
 
-    // Vérifie si l'utilisateur est connecté
-    if (localStorage.getItem('loggedIn') === 'true') {
-      checkLoginStatus();
+    if (localStorage.getItem('loggedIn') === 'true') showUserSection();
+
+    function showUserSection() {
+      document.getElementById('user-name').textContent = localStorage.getItem('user');
+      authSection.style.display = 'none';
+      changePasswordSection.style.display = 'none';
+      userSection.style.display = 'block';
     }
 
-    // Soumission du formulaire de login
-    document.getElementById('login').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      const username = document.getElementById('username').value;
-      const password = document.getElementById('password').value;
+    // Navigation
+    document.getElementById('show-register').onclick = (e) => { e.preventDefault(); loginForm.style.display = 'none'; registerForm.style.display = 'block'; };
+    document.getElementById('cancel-register').onclick = () => { registerForm.style.display = 'none'; loginForm.style.display = 'block'; };
+    document.getElementById('change-password-btn').onclick = () => { userSection.style.display = 'none'; changePasswordSection.style.display = 'block'; };
+    document.getElementById('cancel-change').onclick = () => { changePasswordSection.style.display = 'none'; userSection.style.display = 'block'; };
+
+    document.getElementById('register').addEventListener('submit', async (e) => {
+      e.preventDefault(); // Bloque la soumission standard
+      e.stopPropagation(); // Empêche l'erreur de remonter au parent
+
+      const username = document.getElementById('new-username').value;
+      const password = document.getElementById('new-password-reg').value;
+      const confirm = document.getElementById('confirm-password-reg').value;
+      const errorElement = document.getElementById('register-error');
+
+      if (password !== confirm) {
+        errorElement.textContent = 'Les mots de passe ne correspondent pas.';
+        errorElement.style.display = 'block';
+        return;
+      }
 
       try {
-        const response = await fetch('https://lilied-subprofessionally-mafalda.ngrok-free.dev/auth/login', {
+        const response = await fetch(`${API_BASE_URL}/auth/register`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'ngrok-skip-browser-warning': 'true' // Indispensable
+          },
           body: JSON.stringify({ id: username, password: password })
+        });
+
+        // On vérifie d'abord si la réponse est du JSON
+        const data = await response.json();
+
+        if (response.ok) {
+          alert('Compte créé avec succès !');
+          document.getElementById('register').reset();
+          registerForm.style.display = 'none';
+          loginForm.style.display = 'block';
+        } else {
+          errorElement.textContent = data.error || 'Erreur lors de la création.';
+          errorElement.style.display = 'block';
+        }
+      } catch (error) {
+        console.error("Erreur détaillée:", error);
+        errorElement.textContent = 'Erreur réseau ou sécurité (CORS).';
+        errorElement.style.display = 'block';
+      }
+    });
+
+    // Login
+    document.getElementById('login').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const usernameInput = document.getElementById('username').value;
+      const passwordInput = document.getElementById('password').value;
+      const loginError = document.getElementById('login-error');
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/auth/login`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            // CETTE LIGNE EST CRUCIALE POUR NGROK
+            'ngrok-skip-browser-warning': 'true' 
+          },
+          body: JSON.stringify({ 
+            id: usernameInput, 
+            password: passwordInput 
+          })
         });
 
         const data = await response.json();
 
         if (response.ok) {
+          console.log("Login réussi !");
           localStorage.setItem('loggedIn', 'true');
-          localStorage.setItem('user', username);
-          showUserPanel(username);
+          localStorage.setItem('user', usernameInput);
+          showUserSection();
           window.parent.postMessage({ action: 'loginSuccess' }, '*');
         } else {
-          loginError.textContent = data.error || 'Login failed.';
+          // Si on arrive ici, le serveur a répondu 401 ou 400
+          console.error("Erreur serveur:", data.error);
+          loginError.textContent = data.error || 'Identifiants incorrects.';
           loginError.style.display = 'block';
         }
       } catch (error) {
-        loginError.textContent = 'Network error. Please try again.';
+        console.error("Erreur réseau:", error);
+        loginError.textContent = 'Impossible de contacter le serveur. Vérifiez ngrok.';
         loginError.style.display = 'block';
       }
     });
 
-    // Vérifie le statut de connexion
-    function checkLoginStatus() {
-      const username = localStorage.getItem('user');
-      if (!username) return;
-
-      showUserPanel(username);
-    }
-
-    // Affiche le panneau utilisateur
-    function showUserPanel(username) {
-      userNameSpan.textContent = username;
-      loginForm.style.display = 'none';
-      userPanel.style.display = 'block';
-      loadImports();
-    }
-
-    // Charge la liste des imports depuis le serveur
-    async function loadImports() {
-      try {
-        const response = await fetch('https://lilied-subprofessionally-mafalda.ngrok-free.dev/api/measurements?limit=100', {
-          headers: {
-            'X-API-KEY': 'openbikecle',
-            'ngrok-skip-browser-warning': 'true'
+    // Importation (Modifiée avec le signal)
+    document.getElementById('import-btn').onclick = async () => {
+      const file = jsonFile.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          for (const point of data) {
+            await fetch(`${API_BASE_URL}/api/measurements`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'X-API-KEY': 'openbikecle', 'ngrok-skip-browser-warning': 'true' },
+              body: JSON.stringify(point)
+            });
           }
-        });
+          importStatus.textContent = 'Import réussi !';
+          importStatus.style.color = 'green';
+          jsonFile.value = ""; // Vider la case
+          window.parent.postMessage({ action: 'dataUpdated' }, '*'); // ENVOYER LE SIGNAL
+        } catch (err) { console.error(err); }
+      };
+      reader.readAsText(file);
+    };
 
-        if (!response.ok) {
-          throw new Error(`Erreur HTTP: ${response.status}`);
-        }
-
-        const contentType = response.headers.get('Content-Type');
-        if (!contentType || !contentType.includes('application/json')) {
-          throw new Error('Réponse non-JSON reçue');
-        }
-
-        const imports = await response.json();
-        importsList.innerHTML = '';
-
-        if (imports.length === 0) {
-          importsList.innerHTML = '<li>Aucune donnée importée.</li>';
-          return;
-        }
-
-        imports.forEach(imp => {
-          const li = document.createElement('li');
-          li.textContent = `Track at (${imp.lat}, ${imp.lng}) on ${imp.day}/${imp.month}/${imp.year}`;
-          importsList.appendChild(li);
-        });
-      } catch (error) {
-        console.error('Erreur chargement imports:', error);
-        importsList.innerHTML = '<li>Erreur de chargement des données.</li>';
-      }
-    }
-
-    // Bouton pour changer le mot de passe
-    document.getElementById('change-password-btn').addEventListener('click', function() {
-      userPanel.style.display = 'none';
-      changePasswordForm.style.display = 'block';
-    });
-
-    // Annuler le changement de mot de passe
-    document.getElementById('cancel-change').addEventListener('click', function() {
-      changePasswordForm.style.display = 'none';
-      userPanel.style.display = 'block';
-    });
-
-    // Soumission du formulaire de changement de mot de passe
-    document.getElementById('change-password').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      const newPassword = document.getElementById('new-password').value;
-      const username = localStorage.getItem('user');
-
-      try {
-        const response = await fetch('https://lilied-subprofessionally-mafalda.ngrok-free.dev/auth/change-password', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'ngrok-skip-browser-warning': 'true'
-          },
-          body: JSON.stringify({ id: username, password: newPassword })
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          alert('Mot de passe changé avec succès !');
-          changePasswordForm.style.display = 'none';
-          userPanel.style.display = 'block';
-        } else {
-          changePasswordError.textContent = data.error || 'Échec du changement de mot de passe.';
-          changePasswordError.style.display = 'block';
-        }
-      } catch (error) {
-        console.error('Erreur réseau:', error);
-        changePasswordError.textContent = 'Erreur réseau. Vérifie la console.';
-        changePasswordError.style.display = 'block';
-      }
-    });
-
-    // Déconnexion
-    document.getElementById('logout-btn').addEventListener('click', function() {
-      logout();
-    });
-
-    function logout() {
-      localStorage.removeItem('loggedIn');
-      localStorage.removeItem('user');
-      userPanel.style.display = 'none';
-      loginForm.style.display = 'block';
+    document.getElementById('logout-btn').onclick = () => {
+      localStorage.clear();
+      location.reload();
       window.parent.postMessage({ action: 'logoutSuccess' }, '*');
-    }
+    };
   </script>
 </body>
 </html>
